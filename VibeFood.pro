@@ -1,4 +1,4 @@
-QT       += core gui sql
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -17,6 +17,11 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui
+
+TRANSLATIONS += \
+    VibeFood_en_US.ts
+CONFIG += lrelease
+CONFIG += embed_translations
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

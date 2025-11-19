@@ -2,38 +2,22 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QSqlDatabase>
-#include <QSqlTableModel>
-#include <QItemSelection>
 
-class QTableView;
+QT_BEGIN_NAMESPACE
+namespace Ui {
+class MainWindow;
+}
+QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void onFoodSelectionChanged(const QItemSelection &selected,
-                                const QItemSelection &deselected);
-    void onAddIngredient();   // <-- button slot
-
 private:
-    bool setupDatabase();
-    void initData();
-    void setupModelsAndViews();
-    void updateIngredientsForFood(int foodId);
-
-    QSqlDatabase      db;
-
-    QSqlTableModel   *foodModel;
-    QSqlTableModel   *ingredientModel;
-
-    QTableView       *foodView;
-    QTableView       *ingredientView;
+    Ui::MainWindow *ui;
 };
-
 #endif // MAINWINDOW_H
