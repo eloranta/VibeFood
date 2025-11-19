@@ -276,6 +276,7 @@ void MainWindow::setupModelsAndViews()
     foodView->setSortingEnabled(true);
     foodView->horizontalHeader()->setStretchLastSection(true);
     foodView->setColumnHidden(0, true); // hide food ID
+    foodView->setColumnHidden(2, true); // hide food ID
 
     ingredientView->setModel(ingredientModel);
     ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
