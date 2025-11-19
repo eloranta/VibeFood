@@ -19,5 +19,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    bool openDatabase();
 };
 #endif // MAINWINDOW_H
