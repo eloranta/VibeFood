@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QSqlDatabase>
-#include <QSqlRelationalTableModel>
 #include <QSqlTableModel>
 #include <QItemSelection>
 
@@ -29,8 +28,8 @@ private:
 
     QSqlDatabase db;
 
-    QSqlRelationalTableModel *foodModel;
-    QSqlTableModel           *ingredientModel;
+    QSqlTableModel *foodModel;
+    QSqlTableModel *ingredientModel;
 
     QTableView *foodView;
     QTableView *ingredientView;
