@@ -78,18 +78,18 @@ bool MainWindow::createTables()
     }
 
     // pivot: which ingredients each food contains, with optional amount
-    // if (!q.exec(
-    //         "CREATE TABLE IF NOT EXISTS food_ingredients ("
-    //         "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    //         "  food_id INTEGER NOT NULL,"
-    //         "  ingredient_id INTEGER NOT NULL,"
-    //         "  amount TEXT,"
-    //         "  FOREIGN KEY(food_id) REFERENCES foods(food_id),"
-    //         "  FOREIGN KEY(ingredient_id) REFERENCES ingredients(ingredient_id)"
-    //         ");")) {
-    //     qWarning() << "Create food_ingredients error:" << q.lastError().text();
-    //     return false;
-    // }
+    if (!q.exec(
+            "CREATE TABLE IF NOT EXISTS food_ingredients ("
+            "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "  food_id INTEGER NOT NULL,"
+            "  ingredient_id INTEGER NOT NULL,"
+            "  amount TEXT,"
+            "  FOREIGN KEY(food_id) REFERENCES foods(food_id),"
+            "  FOREIGN KEY(ingredient_id) REFERENCES ingredients(ingredient_id)"
+            ");")) {
+        qWarning() << "Create food_ingredients error:" << q.lastError().text();
+        return false;
+    }
 
     return true;
 }
@@ -185,7 +185,7 @@ void MainWindow::seedDataIfEmpty()
         addIng("BBQ sauce");
     }
 
- /*   // --- Seed pivot table ---
+    // --- Seed pivot table ---
     if (!q.exec("SELECT COUNT(*) FROM food_ingredients;")) {
         qWarning() << "Count food_ingredients error:" << q.lastError().text();
         return;
@@ -270,7 +270,6 @@ void MainWindow::seedDataIfEmpty()
     addLink("Pulled Pork", "Pulled pork", "150 g");
     addLink("Pulled Pork", "BBQ sauce", "30 g");
     addLink("Pulled Pork", "Bun", "1 pc");
-*/
 }
 
 void MainWindow::setupModelAndView()
