@@ -19,6 +19,7 @@ public:
 private slots:
     void onFoodSelectionChanged(const QItemSelection &selected,
                                 const QItemSelection &deselected);
+    void onAddIngredient();   // <-- button slot
 
 private:
     bool setupDatabase();
@@ -26,13 +27,13 @@ private:
     void setupModelsAndViews();
     void updateIngredientsForFood(int foodId);
 
-    QSqlDatabase db;
+    QSqlDatabase      db;
 
-    QSqlTableModel *foodModel;
-    QSqlTableModel *ingredientModel;
+    QSqlTableModel   *foodModel;
+    QSqlTableModel   *ingredientModel;
 
-    QTableView *foodView;
-    QTableView *ingredientView;
+    QTableView       *foodView;
+    QTableView       *ingredientView;
 };
 
 #endif // MAINWINDOW_H
