@@ -7,6 +7,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "IngredientModelWithCheck.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -195,7 +196,7 @@ void MainWindow::setupModelAndView()
         qWarning() << "food select error:" << foodModel->lastError().text();
     }
 
-    ingredientsModel = new QSqlTableModel(this, db);
+    ingredientsModel = new IngredientModelWithCheck(this, db);
     ingredientsModel->setTable("ingredients");
     ingredientsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     if (!ingredientsModel->select())

@@ -12,6 +12,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+class IngredientModelWithCheck;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -22,7 +24,7 @@ private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
     QSqlTableModel *foodModel;
-    QSqlTableModel *ingredientsModel;
+    IngredientModelWithCheck *ingredientsModel;
 
     bool openDatabase();
     bool createTables();
