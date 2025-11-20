@@ -109,7 +109,7 @@ void MainWindow::setupModelAndView()
     }
 
     ingredientsModel = new QSqlTableModel(this, db);
-    ingredientsModel->setTable("foods");
+    ingredientsModel->setTable("ingredients");
     ingredientsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     if (!ingredientsModel->select())
     {
@@ -122,7 +122,7 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
 //    foodView->setSortingEnabled(true);
 
-    ui->ingredientView->setModel(foodModel);
+    ui->ingredientView->setModel(ingredientsModel);
     //    ingredientView->setItemDelegate(new QSqlRelationalDelegate(foodView));
     ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
