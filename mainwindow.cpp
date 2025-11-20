@@ -222,13 +222,14 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
 //    foodView->setSortingEnabled(true);
+    ui->foodView->hideColumn(0);
 
     ui->ingredientView->setModel(ingredientsModel);
     //    ingredientView->setItemDelegate(new QSqlRelationalDelegate(foodView));
     ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
     //    ingredientView->setSortingEnabled(true);
-
+    ui->ingredientView->hideColumn(1);
 }
 
 
