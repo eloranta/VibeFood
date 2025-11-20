@@ -96,6 +96,70 @@ bool MainWindow::createTables()
 
 void MainWindow::seedDataIfEmpty()
 {
+    QSqlQuery query;
+    if (!query.exec("SELECT COUNT(*) FROM food_ingredients;"))
+    {
+        qWarning() << "Count food_ingredients error:" << query.lastError().text();
+        return;
+    }
+
+    addItem("Tortilla", "Tortilla wrap", "1 pc");
+    addItem("Tortilla", "Minced meat", "150 g");
+    addItem("Tortilla", "Cheese", "50 g");
+    addItem("Tortilla", "Lettuce", "some");
+
+    addItem("Salmon soup", "Salmon", "150 g");
+    addItem("Salmon soup", "Potatoes", "3 pcs");
+    addItem("Salmon soup", "Cream", "200 ml");
+    addItem("Salmon soup", "Dill", "to taste");
+
+}
+
+void MainWindow::addItem(const QString &food, const QString &ingredient, const QString &amount)
+{
+    QSqlQuery query;
+
+    query.prepare("INSERT OR IGNORE INTO foods (name) VALUES (:name)");
+    query.bindValue(":name", food);
+
+    if (!query.exec())
+    {
+        qWarning() << "Inserting error in foods:" << query.lastError().text();
+        return;
+    }
+
+    int foodId = query.lastInsertId().toInt();
+    if (foodId == 0)
+    {
+        QSqlQuery query2;
+        query2.prepare("SELECT food_id FROM foods WHERE name = :name");
+        query2.bindValue(":name", food);
+        query2.exec();
+        if (query2.next())
+            foodId = query2.value(0).toInt();
+    }
+
+    query.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:name)");
+    query.bindValue(":name", ingredient);
+
+    if (!query.exec())
+    {
+        qWarning() << "Inserting error in ingredients:" << query.lastError().text();
+        return;
+    }
+
+    int ingredientId = query.lastInsertId().toInt();
+    if (ingredientId == 0)
+    {
+        QSqlQuery query2;
+        query2.prepare("SELECT ingredient_id FROM ingredients WHERE name = :name");
+        query2.bindValue(":name", ingredient);
+        query2.exec();
+        if (query2.next())
+            ingredientId = query2.value(0).toInt();
+    }
+
+
 }
 
 void MainWindow::setupModelAndView()

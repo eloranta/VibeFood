@@ -28,6 +28,6 @@ private:
     bool createTables();
     void seedDataIfEmpty();
     void setupModelAndView();
-
+    void addItem(const QString &food, const QString &ingredient, const QString &amount);
 };
 #endif // MAINWINDOW_H
