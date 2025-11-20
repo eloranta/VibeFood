@@ -195,6 +195,8 @@ void MainWindow::setupModelAndView()
     {
         qWarning() << "food select error:" << foodModel->lastError().text();
     }
+    foodModel->setHeaderData(1, Qt::Horizontal, "Food");
+
 
     ingredientsModel = new IngredientModelWithCheck(this, db);
     ingredientsModel->setTable("ingredients");
@@ -203,6 +205,7 @@ void MainWindow::setupModelAndView()
     {
         qWarning() << "ingredients select error:" << ingredientsModel->lastError().text();
     }
+    ingredientsModel->setHeaderData(1, Qt::Horizontal, "Incredient");
 
     ui->foodView->setStyleSheet(
         "QTableView::item:selected {"
