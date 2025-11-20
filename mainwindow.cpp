@@ -60,7 +60,7 @@ bool MainWindow::createTables()
     // foods: food_id, name
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS foods ("
-            "  food_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "  food_id INTEGER PRIMARY KEY,"
             "  name TEXT NOT NULL UNIQUE"
             ");")) {
         qWarning() << "Create foods error:" << q.lastError().text();
@@ -70,7 +70,7 @@ bool MainWindow::createTables()
     // ingredients: ingredient_id, name
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS ingredients ("
-            "  ingredient_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "  ingredient_id INTEGER PRIMARY KEY,"
             "  name TEXT NOT NULL UNIQUE"
             ");")) {
         qWarning() << "Create ingredients error:" << q.lastError().text();
@@ -80,7 +80,7 @@ bool MainWindow::createTables()
     // pivot: which ingredients each food contains, with optional amount
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS food_ingredients ("
-            "  id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "  id INTEGER PRIMARY KEY,"
             "  food_id INTEGER NOT NULL,"
             "  ingredient_id INTEGER NOT NULL,"
             "  amount TEXT,"
@@ -103,6 +103,9 @@ void MainWindow::seedDataIfEmpty()
         return;
     }
 
+    if (!query.next() || query.value(0).toInt() != 0)
+        return;
+
     addItem("Tortilla", "Tortilla wrap", "1 pc");
     addItem("Tortilla", "Minced meat", "150 g");
     addItem("Tortilla", "Cheese", "50 g");
@@ -113,53 +116,73 @@ void MainWindow::seedDataIfEmpty()
     addItem("Salmon soup", "Cream", "200 ml");
     addItem("Salmon soup", "Dill", "to taste");
 
+    addItem("Hamburger", "Bun", "1 pc");
+    addItem("Hamburger", "Beef patty", "1 pc");
+    addItem("Hamburger", "Cheddar", "1 slice");
+    addItem("Hamburger", "Pickles", "few slices");
+
+    addItem("Salmon nigiri", "Rice", "100 g");
+    addItem("Salmon nigiri", "Salmon", "2 slices");
+    addItem("Salmon nigiri", "Nori", "optional");
+
+    addItem("Ribs", "Pork ribs", "300 g");
+    addItem("Ribs", "BBQ sauce", "50 g");
+
+    addItem("Pulled Pork", "Pulled pork", "150 g");
+    addItem("Pulled Pork", "BBQ sauce", "30 g");
+    addItem("Pulled Pork", "Bun", "1 pc");
+
 }
 
 void MainWindow::addItem(const QString &food, const QString &ingredient, const QString &amount)
 {
-    QSqlQuery query;
+    QSqlQuery query1;
 
-    query.prepare("INSERT OR IGNORE INTO foods (name) VALUES (:name)");
-    query.bindValue(":name", food);
+    query1.prepare("INSERT OR IGNORE INTO foods (name) VALUES (:name)");
+    query1.bindValue(":name", food);
 
-    if (!query.exec())
+    if (!query1.exec())
     {
-        qWarning() << "Inserting error in foods:" << query.lastError().text();
+        qWarning() << "Inserting error in foods:" << query1.lastError().text();
         return;
     }
 
-    int foodId = query.lastInsertId().toInt();
-    if (foodId == 0)
-    {
-        QSqlQuery query2;
-        query2.prepare("SELECT food_id FROM foods WHERE name = :name");
-        query2.bindValue(":name", food);
-        query2.exec();
-        if (query2.next())
-            foodId = query2.value(0).toInt();
-    }
+    int foodId = 0;
+    query1.prepare("SELECT food_id FROM foods WHERE name = :name");
+    query1.bindValue(":name", food);
+    query1.exec();
+    if (query1.next())
+        foodId = query1.value(0).toInt();
 
-    query.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:name)");
-    query.bindValue(":name", ingredient);
+    QSqlQuery query2;
 
-    if (!query.exec())
+    query2.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:name)");
+    query2.bindValue(":name", ingredient);
+
+    if (!query2.exec())
     {
-        qWarning() << "Inserting error in ingredients:" << query.lastError().text();
+        qWarning() << "Inserting error in ingredients:" << query2.lastError().text();
         return;
     }
 
-    int ingredientId = query.lastInsertId().toInt();
-    if (ingredientId == 0)
+    int ingredientId = 0;
+    query2.prepare("SELECT ingredient_id FROM ingredients WHERE name = :name");
+    query2.bindValue(":name", ingredient);
+    query2.exec();
+    if (query2.next())
+        ingredientId = query2.value(0).toInt();
+
+    QSqlQuery query3;
+    query3.prepare(
+        "INSERT INTO food_ingredients (food_id, ingredient_id, amount) "
+        "VALUES (:food_id, :ingredient_id, :amount);");
+    query3.bindValue(":food_id", foodId);
+    query3.bindValue(":ingredient_id", ingredientId);
+    query3.bindValue(":amount", amount);
+    if (!query3.exec())
     {
-        QSqlQuery query2;
-        query2.prepare("SELECT ingredient_id FROM ingredients WHERE name = :name");
-        query2.bindValue(":name", ingredient);
-        query2.exec();
-        if (query2.next())
-            ingredientId = query2.value(0).toInt();
+        qWarning() << "Insert food_ingredients error:" << query3.lastError().text();
     }
-
-
 }
 
 void MainWindow::setupModelAndView()
