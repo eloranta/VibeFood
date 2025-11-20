@@ -204,6 +204,19 @@ void MainWindow::setupModelAndView()
         qWarning() << "ingredients select error:" << ingredientsModel->lastError().text();
     }
 
+    ui->foodView->setStyleSheet(
+        "QTableView::item:selected {"
+        "    background-color: lightblue;"
+        "    color: black;"
+        "}"
+        "QTableView::item:selected:active {"
+        "    background-color: lightblue;"
+        "}"
+        "QTableView::item:selected:!active {"
+        "    background-color: #cce9ff;"  // slightly lighter
+        "}"
+        );
+
     ui->foodView->setModel(foodModel);
 //    foodView->setItemDelegate(new QSqlRelationalDelegate(foodView));
     ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
