@@ -12,25 +12,33 @@ public:
     explicit IngredientModelWithCheck(QObject *parent = nullptr,
                                       const QSqlDatabase &db = QSqlDatabase());
 
+    // Column layout:
+    // 0 = checkbox
+    // 1 = ingredient_id (SQL)
+    // 2 = ingredient name (SQL)
+    // 3 = amount (virtual, editable only when checked)
+
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index, int role) const override;
     bool setData(const QModelIndex &index, const QVariant &value,
-                 int role = Qt::EditRole) override;
+                 int role) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+                        int role) const override;
 
     bool select() override;
 
-    // Needed so DB sync knows which food is selected
-    void setCurrentFoodId(int id);
+    // Called when user selects a food
+    void setCurrentFoodId(int foodId);
 
-    // Called by MainWindow when food changes
-    void setCheckedRows(const QSet<int> &ingredientIds);
+    // Called when MainWindow loads pivot rows
+    void setCheckedRows(const QSet<int> &ingredientIds,
+                        const QMap<int, QString> &amounts);
 
 private:
-    QVector<Qt::CheckState> m_checks;    // row → checked/unchecked
-    int m_currentFoodId = -1;            // selected food
+    QVector<Qt::CheckState> m_checks;     // row → checked/unchecked
+    QVector<QString> m_amounts;           // row → amount
+    int m_currentFoodId = -1;             // current selected food
 };
 
 #endif // INGREDIENTMODELWITHCHECK_H

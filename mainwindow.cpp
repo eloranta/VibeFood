@@ -234,11 +234,14 @@ void MainWindow::setupModelAndView()
     //    ingredientView->setSortingEnabled(true);
     ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
     ui->ingredientView->hideColumn(1);
+    ui->ingredientView->setColumnWidth(0, 35); // checkbox
+    ui->ingredientView->setColumnWidth(3, 120); // amount
 
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onFoodSelectionChanged);
-
+    connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged,
+            this, &MainWindow::onFoodSelectionChanged);
     ui->foodView->selectRow(0);
-
+    onFoodSelectionChanged(foodModel->index(0, 0), QModelIndex());
 }
 
 void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &)
@@ -248,21 +251,34 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
 
     int foodId = foodModel->data(foodModel->index(current.row(), 0)).toInt();
 
-    // Tell ingredient model which food is currently selected
+    // Tell ingredient model which food is selected
     ingredientsModel->setCurrentFoodId(foodId);
 
+    //-----------------------------------------------------------------
+    // Load ingredient_id + amount for this food
+    //-----------------------------------------------------------------
+
     QSqlQuery q(db);
-    q.prepare("SELECT ingredient_id FROM food_ingredients WHERE food_id = :id");
-    q.bindValue(":id", foodId);
+    q.prepare("SELECT ingredient_id, amount FROM food_ingredients WHERE food_id = :f");
+    q.bindValue(":f", foodId);
     q.exec();
 
     QSet<int> ingredientIds;
-    while (q.next()) {
-        ingredientIds.insert(q.value(0).toInt());
+    QMap<int, QString> amounts;
+
+    while (q.next())
+    {
+        int ingredientId = q.value(0).toInt();
+        QString amount   = q.value(1).toString();
+
+        ingredientIds.insert(ingredientId);
+        amounts.insert(ingredientId, amount);
     }
 
-    ingredientsModel->setCheckedRows(ingredientIds);
+    // Update checkboxes + amounts
+    ingredientsModel->setCheckedRows(ingredientIds, amounts);
 }
+
 
 
 
