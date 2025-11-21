@@ -53,53 +53,51 @@ bool IngredientModelWithCheck::setData(const QModelIndex &index,
     int r = index.row();
     int c = index.column();
 
-    // Handle checkbox column
+    // --- Checkbox column ---
     if (c == 0 && role == Qt::CheckStateRole) {
+
+        qDebug() << "Checkbox toggled row=" << r;
 
         if (r < 0 || r >= rowCount())
             return false;
 
         // Update internal state
-        m_checks[r] = static_cast<Qt::CheckState>(value.toInt());
+        Qt::CheckState newState = static_cast<Qt::CheckState>(value.toInt());
+        m_checks[r] = newState;
+
         emit dataChanged(index, index, {Qt::CheckStateRole});
 
-        // ---- PIVOT TABLE UPDATE ----
-
-        // ingredient_id is at SQL column 0 of the underlying table
-        int ingredientId = QSqlTableModel::data(
-                               QSqlTableModel::index(r, 1), Qt::DisplayRole).toInt();
+        // --- DB UPDATE ---
+        int ingredientId =
+            QSqlTableModel::data(QSqlTableModel::index(r, 1), Qt::DisplayRole).toInt();
 
         if (m_currentFoodId < 0)
-            return true; // no food selected yet
+            return true;
 
         QSqlQuery q(database());
 
-        if (m_checks[r] == Qt::Checked) {
-            // INSERT (unless already exists)
-            q.prepare("INSERT OR IGNORE INTO food_ingredients "
-                      "(food_id, ingredient_id) "
+        if (newState == Qt::Checked) {
+            q.prepare("INSERT OR IGNORE INTO food_ingredients (food_id, ingredient_id) "
                       "VALUES (:f, :i)");
             q.bindValue(":f", m_currentFoodId);
             q.bindValue(":i", ingredientId);
             q.exec();
+            qDebug() << "Inserted pivot row";
         } else {
-            // DELETE
-            q.prepare("DELETE FROM food_ingredients "
-                      "WHERE food_id = :f AND ingredient_id = :i");
+            q.prepare("DELETE FROM food_ingredients WHERE food_id = :f AND ingredient_id = :i;");
             q.bindValue(":f", m_currentFoodId);
             q.bindValue(":i", ingredientId);
             q.exec();
+            qDebug() << "Deleted pivot row";
         }
-        // ---- END OF DB SYNC ----
 
         return true;
     }
 
-    // Other (real) SQL columns
-    QModelIndex sourceIndex = this->QSqlTableModel::index(r, c - 1);
-    return QSqlTableModel::setData(sourceIndex, value, role);
+    // --- Other real SQL columns ---
+    QModelIndex src = QSqlTableModel::index(r, c - 1);
+    return QSqlTableModel::setData(src, value, role);
 }
-
 
 Qt::ItemFlags IngredientModelWithCheck::flags(const QModelIndex &index) const
 {

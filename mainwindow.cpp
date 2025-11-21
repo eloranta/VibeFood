@@ -232,6 +232,7 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
     //    ingredientView->setSortingEnabled(true);
+    ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
     ui->ingredientView->hideColumn(1);
 
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onFoodSelectionChanged);
