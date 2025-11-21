@@ -30,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent)
     seedDataIfEmpty();
 
     setupModelAndView();
+
+    connect(ui->btnShowAll, &QPushButton::toggled,
+            this, &MainWindow::onShowAllToggled);
 }
 
 MainWindow::~MainWindow()
@@ -314,6 +317,27 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
 
     // Update checkboxes + amounts
     ingredientsModel->setCheckedRows(ingredientIds, amounts);
+
+    onShowAllToggled(ui->btnShowAll->isChecked());
+}
+
+void MainWindow::onShowAllToggled(bool showAll)
+{
+    int rows = ingredientsModel->rowCount();
+
+    for (int r = 0; r < rows; ++r)
+    {
+        bool checked = (ingredientsModel->data(
+                                            ingredientsModel->index(r, 0),
+                                            Qt::CheckStateRole
+                                            ).toInt() == Qt::Checked);
+
+        // Show All = show everything
+        // Hide Unchecked = only show checked rows
+        bool visible = showAll || checked;
+
+        ui->ingredientView->setRowHidden(r, !visible);
+    }
 }
 
 

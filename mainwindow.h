@@ -33,5 +33,6 @@ private:
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
 private slots:
     void onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
+    void onShowAllToggled(bool checked);
 };
 #endif // MAINWINDOW_H
