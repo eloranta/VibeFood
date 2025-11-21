@@ -233,7 +233,29 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
     //    ingredientView->setSortingEnabled(true);
     ui->ingredientView->hideColumn(1);
+
+    connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onFoodSelectionChanged);
 }
 
+void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &)
+{
+    if (!current.isValid())
+        return;
+
+    // food_id is column 0 (hidden)
+    int foodId = foodModel->data(foodModel->index(current.row(), 0)).toInt();
+
+    QSqlQuery q(db);
+    q.prepare("SELECT ingredient_id FROM food_ingredients WHERE food_id = :id");
+    q.bindValue(":id", foodId);
+    q.exec();
+
+    QSet<int> ingredientIds;
+    while (q.next()) {
+        ingredientIds.insert(q.value(0).toInt());
+    }
+
+    ingredientsModel->setCheckedRows(ingredientIds);
+}
 
 

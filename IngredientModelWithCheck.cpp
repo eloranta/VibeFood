@@ -97,3 +97,19 @@ QVariant IngredientModelWithCheck::headerData(int section,
 
     return QSqlTableModel::headerData(section, orientation, role);
 }
+
+void IngredientModelWithCheck::setCheckedRows(const QSet<int> &ingredientIds)
+{
+    for (int i = 0; i < rowCount(); ++i)
+    {
+        int ingredientId = QSqlTableModel::data(
+                               QSqlTableModel::index(i, 0), Qt::DisplayRole).toInt();
+
+        m_checks[i] = ingredientIds.contains(ingredientId)
+                          ? Qt::Checked
+                          : Qt::Unchecked;
+    }
+
+    // Notify the view
+    emit dataChanged(index(0,0), index(rowCount()-1, 0), {Qt::CheckStateRole});
+}

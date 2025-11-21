@@ -31,5 +31,7 @@ private:
     void seedDataIfEmpty();
     void setupModelAndView();
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
+private slots:
+    void onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
 };
 #endif // MAINWINDOW_H
