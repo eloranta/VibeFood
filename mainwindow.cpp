@@ -235,6 +235,9 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->hideColumn(1);
 
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onFoodSelectionChanged);
+
+    ui->foodView->selectRow(0);
+
 }
 
 void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &)
@@ -242,8 +245,10 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
     if (!current.isValid())
         return;
 
-    // food_id is column 0 (hidden)
     int foodId = foodModel->data(foodModel->index(current.row(), 0)).toInt();
+
+    // Tell ingredient model which food is currently selected
+    ingredientsModel->setCurrentFoodId(foodId);
 
     QSqlQuery q(db);
     q.prepare("SELECT ingredient_id FROM food_ingredients WHERE food_id = :id");
@@ -257,5 +262,6 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
 
     ingredientsModel->setCheckedRows(ingredientIds);
 }
+
 
 

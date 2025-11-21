@@ -1,3 +1,4 @@
+#include <QSqlQuery>
 #include "IngredientModelWithCheck.h"
 
 IngredientModelWithCheck::IngredientModelWithCheck(QObject *parent, const QSqlDatabase &db)
@@ -52,20 +53,53 @@ bool IngredientModelWithCheck::setData(const QModelIndex &index,
     int r = index.row();
     int c = index.column();
 
+    // Handle checkbox column
     if (c == 0 && role == Qt::CheckStateRole) {
+
         if (r < 0 || r >= rowCount())
             return false;
-        if (r >= m_checks.size())
-            m_checks.resize(rowCount());
+
+        // Update internal state
         m_checks[r] = static_cast<Qt::CheckState>(value.toInt());
         emit dataChanged(index, index, {Qt::CheckStateRole});
+
+        // ---- PIVOT TABLE UPDATE ----
+
+        // ingredient_id is at SQL column 0 of the underlying table
+        int ingredientId = QSqlTableModel::data(
+                               QSqlTableModel::index(r, 1), Qt::DisplayRole).toInt();
+
+        if (m_currentFoodId < 0)
+            return true; // no food selected yet
+
+        QSqlQuery q(database());
+
+        if (m_checks[r] == Qt::Checked) {
+            // INSERT (unless already exists)
+            q.prepare("INSERT OR IGNORE INTO food_ingredients "
+                      "(food_id, ingredient_id) "
+                      "VALUES (:f, :i)");
+            q.bindValue(":f", m_currentFoodId);
+            q.bindValue(":i", ingredientId);
+            q.exec();
+        } else {
+            // DELETE
+            q.prepare("DELETE FROM food_ingredients "
+                      "WHERE food_id = :f AND ingredient_id = :i");
+            q.bindValue(":f", m_currentFoodId);
+            q.bindValue(":i", ingredientId);
+            q.exec();
+        }
+        // ---- END OF DB SYNC ----
+
         return true;
     }
 
-    // Real DB-backed columns
+    // Other (real) SQL columns
     QModelIndex sourceIndex = this->QSqlTableModel::index(r, c - 1);
     return QSqlTableModel::setData(sourceIndex, value, role);
 }
+
 
 Qt::ItemFlags IngredientModelWithCheck::flags(const QModelIndex &index) const
 {
@@ -112,4 +146,9 @@ void IngredientModelWithCheck::setCheckedRows(const QSet<int> &ingredientIds)
 
     // Notify the view
     emit dataChanged(index(0,0), index(rowCount()-1, 0), {Qt::CheckStateRole});
+}
+
+void IngredientModelWithCheck::setCurrentFoodId(int id)
+{
+    m_currentFoodId = id;
 }

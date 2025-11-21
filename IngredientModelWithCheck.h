@@ -14,12 +14,12 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
-    QVariant headerData(int section, Qt::Orientation orientation,
-                        int role = Qt::DisplayRole) const override;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
     bool select() override;   // to resize checkbox storage when data is reloaded
-
+    void setCurrentFoodId(int id);
 private:
     QVector<Qt::CheckState> m_checks;
+    int m_currentFoodId = -1;
 };
 
 #endif // INGREDIENTMODELWITHCHECK_H
