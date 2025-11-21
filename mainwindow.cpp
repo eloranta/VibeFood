@@ -109,22 +109,60 @@ void MainWindow::seedDataIfEmpty()
 
     addItem("Tortilla", "Tortilla wrap", "1 pc");
     addItem("Tortilla", "Minced meat", "150 g");
-    addItem("Tortilla", "Cheese", "50 g");
-    addItem("Tortilla", "Lettuce", "some");
+    addItem("Tortilla", "Tomatoes", "some");
+    addItem("Tortilla", "Cucumber", "some");
+    addItem("Tortilla", "Corn", "50 g");
+    addItem("Tortilla", "Turkish youghurt", "some");
+    addItem("Tortilla", "Garlic", "1 glove");
 
     addItem("Salmon soup", "Salmon", "150 g");
     addItem("Salmon soup", "Potatoes", "3 pcs");
+    addItem("Salmon soup", "Carrots", "200 ml");
+    addItem("Salmon soup", "Onion", "150 g");
+    addItem("Salmon soup", "Butter", "3 pcs");
     addItem("Salmon soup", "Cream", "200 ml");
     addItem("Salmon soup", "Dill", "to taste");
 
-    addItem("Hamburger", "Bun", "1 pc");
-    addItem("Hamburger", "Beef patty", "1 pc");
-    addItem("Hamburger", "Cheddar", "1 slice");
-    addItem("Hamburger", "Pickles", "few slices");
+    addItem("Fried Liver", "Liver", "1 pc");
+    addItem("Fried Liver", "Butter", "1 pc");
 
-    addItem("Salmon nigiri", "Rice", "100 g");
+    addItem("Pasta Bolognese", "Pancetta", "150 g");
+    addItem("Pasta Bolognese", "Onion", "3 pcs");
+    addItem("Pasta Bolognese", "Carrots", "200 ml");
+    addItem("Pasta Bolognese", "Cellery", "150 g");
+    addItem("Pasta Bolognese", "Minced meat", "3 pcs");
+    addItem("Pasta Bolognese", "Red Wine", "200 ml");
+    addItem("Pasta Bolognese", "Tomato Paste", "to taste");
+    addItem("Pasta Bolognese", "Buljong", "to taste");
+    addItem("Pasta Bolognese", "Milk", "to taste");
+    addItem("Pasta Bolognese", "Spagetti", "to taste");
+
+    addItem("Cured Salmon", "Salmon", "1 pc");
+
+    addItem("Hamburger", "Minced Meat", "1 pc");
+    addItem("Hamburger", "Bun", "1 pc");
+    addItem("Hamburger", "Cheddar", "1 slice");
+    addItem("Hamburger", "Mayonese", "few slices");
+    addItem("Hamburger", "Lettuce", "few slices");
+
+    addItem("Fried Mushrooms", "Mushrooms", "300 g");
+    addItem("Fried Mushrooms", "Garlic", "300 g");
+    addItem("Fried Mushrooms", "Pecorino", "300 g");
+    addItem("Fried Mushrooms", "Aurajuusto", "300 g");
+
     addItem("Salmon nigiri", "Salmon", "2 slices");
-    addItem("Salmon nigiri", "Nori", "optional");
+    addItem("Salmon nigiri", "Rice", "100 g");
+    addItem("Salmon nigiri", "Teriyaki souce", "optional");
+    addItem("Salmon nigiri", "Mayonese", "optional");
+    addItem("Salmon nigiri", "Wasabi", "optional");
+    addItem("Salmon nigiri", "Sesame Seeds", "optional");
+    addItem("Salmon nigiri", "Green Onion", "optional");
+
+    addItem("Macaroni Casserole", "Macaroni", "300 g");
+    addItem("Macaroni Casserole", "Minced Meat", "300 g");
+    addItem("Macaroni Casserole", "Eggs", "300 g");
+    addItem("Macaroni Casserole", "Milk", "300 g");
+    addItem("Macaroni Casserole", "Cheese", "300 g");
 
     addItem("Ribs", "Pork ribs", "300 g");
     addItem("Ribs", "BBQ sauce", "50 g");
@@ -132,7 +170,6 @@ void MainWindow::seedDataIfEmpty()
     addItem("Pulled Pork", "Pulled pork", "150 g");
     addItem("Pulled Pork", "BBQ sauce", "30 g");
     addItem("Pulled Pork", "Bun", "1 pc");
-
 }
 
 void MainWindow::addItem(const QString &food, const QString &ingredient, const QString &amount)
