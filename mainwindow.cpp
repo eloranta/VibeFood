@@ -245,6 +245,7 @@ void MainWindow::setupModelAndView()
     ui->foodView->hideColumn(2); // hide recipe column
     ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->foodView->setSortingEnabled(true);
 
     ingredientsModel = new IngredientModelWithCheck(this, db);
     ingredientsModel->setTable("ingredients");
@@ -258,6 +259,7 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->setColumnWidth(0, 35);
     ui->ingredientView->setColumnWidth(3, 120);
     ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
+    ui->ingredientView->setSortingEnabled(true);
 
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged,
             this, &MainWindow::onFoodSelectionChanged);
