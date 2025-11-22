@@ -33,6 +33,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->btnShowAll, &QPushButton::toggled,
             this, &MainWindow::onShowAllToggled);
+
+    connect(ui->textEdit, &QTextEdit::textChanged,
+            this, &MainWindow::onRecipeChanged);   // <-- NEW
 }
 
 MainWindow::~MainWindow()
@@ -42,7 +45,6 @@ MainWindow::~MainWindow()
 
 bool MainWindow::openDatabase()
 {
-    // Put the DB file next to the executable
     QString dbPath = QDir(QCoreApplication::applicationDirPath()).filePath("vibefood.db");
 
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -61,27 +63,41 @@ bool MainWindow::createTables()
 {
     QSqlQuery q(db);
 
-    // foods: food_id, name
+    // foods table (new: recipe TEXT)
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS foods ("
             "  food_id INTEGER PRIMARY KEY,"
-            "  name TEXT NOT NULL UNIQUE"
-            ");")) {
+            "  name TEXT NOT NULL UNIQUE,"
+            "  recipe TEXT"
+            ");"))
+    {
         qWarning() << "Create foods error:" << q.lastError().text();
         return false;
     }
 
-    // ingredients: ingredient_id, name
+    // Ensure recipe column exists in older DB
+    q.exec("PRAGMA table_info(foods)");
+    bool hasRecipe = false;
+    while (q.next())
+    {
+        if (q.value(1).toString() == "recipe")
+            hasRecipe = true;
+    }
+    if (!hasRecipe)
+        q.exec("ALTER TABLE foods ADD COLUMN recipe TEXT");
+
+    // ingredients
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS ingredients ("
             "  ingredient_id INTEGER PRIMARY KEY,"
             "  name TEXT NOT NULL UNIQUE"
-            ");")) {
+            ");"))
+    {
         qWarning() << "Create ingredients error:" << q.lastError().text();
         return false;
     }
 
-    // pivot: which ingredients each food contains, with optional amount
+    // pivot table
     if (!q.exec(
             "CREATE TABLE IF NOT EXISTS food_ingredients ("
             "  id INTEGER PRIMARY KEY,"
@@ -90,7 +106,8 @@ bool MainWindow::createTables()
             "  amount TEXT,"
             "  FOREIGN KEY(food_id) REFERENCES foods(food_id),"
             "  FOREIGN KEY(ingredient_id) REFERENCES ingredients(ingredient_id)"
-            ");")) {
+            ");"))
+    {
         qWarning() << "Create food_ingredients error:" << q.lastError().text();
         return false;
     }
@@ -101,13 +118,8 @@ bool MainWindow::createTables()
 void MainWindow::seedDataIfEmpty()
 {
     QSqlQuery query;
-    if (!query.exec("SELECT COUNT(*) FROM food_ingredients;"))
-    {
-        qWarning() << "Count food_ingredients error:" << query.lastError().text();
-        return;
-    }
-
-    if (!query.next() || query.value(0).toInt() != 0)
+    query.exec("SELECT COUNT(*) FROM food_ingredients;");
+    if (query.next() && query.value(0).toInt() != 0)
         return;
 
     addItem("Tortilla", "Tortilla wrap", "1 pc");
@@ -172,58 +184,36 @@ void MainWindow::seedDataIfEmpty()
 
     addItem("Pulled Pork", "Pulled pork", "150 g");
     addItem("Pulled Pork", "BBQ sauce", "30 g");
-    addItem("Pulled Pork", "Bun", "1 pc");
-}
+    addItem("Pulled Pork", "Bun", "1 pc");}
 
 void MainWindow::addItem(const QString &food, const QString &ingredient, const QString &amount)
 {
-    QSqlQuery query1;
+    QSqlQuery q;
 
-    query1.prepare("INSERT OR IGNORE INTO foods (name) VALUES (:name)");
-    query1.bindValue(":name", food);
+    q.prepare("INSERT OR IGNORE INTO foods (name) VALUES (:n)");
+    q.bindValue(":n", food);
+    q.exec();
 
-    if (!query1.exec())
-    {
-        qWarning() << "Inserting error in foods:" << query1.lastError().text();
-        return;
-    }
+    q.prepare("SELECT food_id FROM foods WHERE name=:n");
+    q.bindValue(":n", food);
+    q.exec();
+    int foodId = q.next() ? q.value(0).toInt() : 0;
 
-    int foodId = 0;
-    query1.prepare("SELECT food_id FROM foods WHERE name = :name");
-    query1.bindValue(":name", food);
-    query1.exec();
-    if (query1.next())
-        foodId = query1.value(0).toInt();
+    q.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:n)");
+    q.bindValue(":n", ingredient);
+    q.exec();
 
-    QSqlQuery query2;
+    q.prepare("SELECT ingredient_id FROM ingredients WHERE name=:n");
+    q.bindValue(":n", ingredient);
+    q.exec();
+    int ingredientId = q.next() ? q.value(0).toInt() : 0;
 
-    query2.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:name)");
-    query2.bindValue(":name", ingredient);
-
-    if (!query2.exec())
-    {
-        qWarning() << "Inserting error in ingredients:" << query2.lastError().text();
-        return;
-    }
-
-    int ingredientId = 0;
-    query2.prepare("SELECT ingredient_id FROM ingredients WHERE name = :name");
-    query2.bindValue(":name", ingredient);
-    query2.exec();
-    if (query2.next())
-        ingredientId = query2.value(0).toInt();
-
-    QSqlQuery query3;
-    query3.prepare(
-        "INSERT INTO food_ingredients (food_id, ingredient_id, amount) "
-        "VALUES (:food_id, :ingredient_id, :amount);");
-    query3.bindValue(":food_id", foodId);
-    query3.bindValue(":ingredient_id", ingredientId);
-    query3.bindValue(":amount", amount);
-    if (!query3.exec())
-    {
-        qWarning() << "Insert food_ingredients error:" << query3.lastError().text();
-    }
+    q.prepare("INSERT INTO food_ingredients (food_id, ingredient_id, amount)"
+              "VALUES (:f,:i,:a)");
+    q.bindValue(":f", foodId);
+    q.bindValue(":i", ingredientId);
+    q.bindValue(":a", amount);
+    q.exec();
 }
 
 void MainWindow::setupModelAndView()
@@ -231,57 +221,35 @@ void MainWindow::setupModelAndView()
     foodModel = new QSqlTableModel(this, db);
     foodModel->setTable("foods");
     foodModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    if (!foodModel->select())
-    {
-        qWarning() << "food select error:" << foodModel->lastError().text();
-    }
-    foodModel->setHeaderData(1, Qt::Horizontal, "Food");
+    foodModel->select();
 
+    foodModel->setHeaderData(1, Qt::Horizontal, "Food");
+    foodModel->setHeaderData(2, Qt::Horizontal, "Recipe");
+
+    ui->foodView->setModel(foodModel);
+    ui->foodView->hideColumn(0); // food_id
+    ui->foodView->hideColumn(2); // hide recipe column
+    ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
 
     ingredientsModel = new IngredientModelWithCheck(this, db);
     ingredientsModel->setTable("ingredients");
     ingredientsModel->setEditStrategy(QSqlTableModel::OnFieldChange);
-    if (!ingredientsModel->select())
-    {
-        qWarning() << "ingredients select error:" << ingredientsModel->lastError().text();
-    }
-    ingredientsModel->setHeaderData(1, Qt::Horizontal, "Incredient");
+    ingredientsModel->select();
 
-    ui->foodView->setStyleSheet(
-        "QTableView::item:selected {"
-        "    background-color: lightblue;"
-        "    color: black;"
-        "}"
-        "QTableView::item:selected:active {"
-        "    background-color: lightblue;"
-        "}"
-        "QTableView::item:selected:!active {"
-        "    background-color: #cce9ff;"  // slightly lighter
-        "}"
-        );
-
-    ui->foodView->setModel(foodModel);
-//    foodView->setItemDelegate(new QSqlRelationalDelegate(foodView));
-    ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
-//    foodView->setSortingEnabled(true);
-    ui->foodView->hideColumn(0);
+    ingredientsModel->setHeaderData(1, Qt::Horizontal, "Ingredient");
 
     ui->ingredientView->setModel(ingredientsModel);
-    //    ingredientView->setItemDelegate(new QSqlRelationalDelegate(foodView));
-    ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
-    //    ingredientView->setSortingEnabled(true);
-    ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
     ui->ingredientView->hideColumn(1);
-    ui->ingredientView->setColumnWidth(0, 35); // checkbox
-    ui->ingredientView->setColumnWidth(3, 120); // amount
+    ui->ingredientView->setColumnWidth(0, 35);
+    ui->ingredientView->setColumnWidth(3, 120);
+    ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
 
-    connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::onFoodSelectionChanged);
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged,
             this, &MainWindow::onFoodSelectionChanged);
+
     ui->foodView->selectRow(0);
-    onFoodSelectionChanged(foodModel->index(0, 0), QModelIndex());
+    onFoodSelectionChanged(foodModel->index(0,0), QModelIndex());
 }
 
 void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &)
@@ -291,32 +259,39 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
 
     int foodId = foodModel->data(foodModel->index(current.row(), 0)).toInt();
 
-    // Tell ingredient model which food is selected
-    ingredientsModel->setCurrentFoodId(foodId);
+    //----------------------------
+    // Load recipe text
+    //----------------------------
+    {
+        QSqlQuery q(db);
+        q.prepare("SELECT recipe FROM foods WHERE food_id = :id");
+        q.bindValue(":id", foodId);
+        q.exec();
+        if (q.next())
+            ui->textEdit->setPlainText(q.value(0).toString());
+        else
+            ui->textEdit->clear();
+    }
 
-    //-----------------------------------------------------------------
-    // Load ingredient_id + amount for this food
-    //-----------------------------------------------------------------
-
+    //----------------------------
+    // Load ingredient check + amount
+    //----------------------------
     QSqlQuery q(db);
-    q.prepare("SELECT ingredient_id, amount FROM food_ingredients WHERE food_id = :f");
+    q.prepare("SELECT ingredient_id, amount FROM food_ingredients WHERE food_id=:f");
     q.bindValue(":f", foodId);
     q.exec();
 
-    QSet<int> ingredientIds;
+    QSet<int> ids;
     QMap<int, QString> amounts;
 
     while (q.next())
     {
-        int ingredientId = q.value(0).toInt();
-        QString amount   = q.value(1).toString();
-
-        ingredientIds.insert(ingredientId);
-        amounts.insert(ingredientId, amount);
+        ids.insert(q.value(0).toInt());
+        amounts.insert(q.value(0).toInt(), q.value(1).toString());
     }
 
-    // Update checkboxes + amounts
-    ingredientsModel->setCheckedRows(ingredientIds, amounts);
+    ingredientsModel->setCurrentFoodId(foodId);
+    ingredientsModel->setCheckedRows(ids, amounts);
 
     onShowAllToggled(ui->btnShowAll->isChecked());
 }
@@ -324,22 +299,32 @@ void MainWindow::onFoodSelectionChanged(const QModelIndex &current, const QModel
 void MainWindow::onShowAllToggled(bool showAll)
 {
     int rows = ingredientsModel->rowCount();
-
     for (int r = 0; r < rows; ++r)
     {
-        bool checked = (ingredientsModel->data(
-                                            ingredientsModel->index(r, 0),
-                                            Qt::CheckStateRole
-                                            ).toInt() == Qt::Checked);
+        bool checked = ingredientsModel->data(
+                                           ingredientsModel->index(r,0),
+                                           Qt::CheckStateRole).toInt() == Qt::Checked;
 
-        // Show All = show everything
-        // Hide Unchecked = only show checked rows
         bool visible = showAll || checked;
-
         ui->ingredientView->setRowHidden(r, !visible);
     }
 }
 
+//-------------------------------------
+// SAVE RECIPE TEXT WHEN USER EDITS IT
+//-------------------------------------
+void MainWindow::onRecipeChanged()
+{
+    QModelIndex cur = ui->foodView->currentIndex();
+    if (!cur.isValid())
+        return;
 
+    int foodId = foodModel->data(foodModel->index(cur.row(), 0)).toInt();
+    QString text = ui->textEdit->toPlainText();
 
-
+    QSqlQuery q(db);
+    q.prepare("UPDATE foods SET recipe=:r WHERE food_id=:id");
+    q.bindValue(":r", text);
+    q.bindValue(":id", foodId);
+    q.exec();
+}

@@ -20,6 +20,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
 private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
@@ -31,8 +32,11 @@ private:
     void seedDataIfEmpty();
     void setupModelAndView();
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
+
 private slots:
     void onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void onShowAllToggled(bool checked);
+    void onRecipeChanged();    // <-- NEW
 };
+
 #endif // MAINWINDOW_H
