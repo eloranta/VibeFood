@@ -122,69 +122,71 @@ void MainWindow::seedDataIfEmpty()
     if (query.next() && query.value(0).toInt() != 0)
         return;
 
-    addItem("Tortilla", "Tortilla wrap", "1 pc");
-    addItem("Tortilla", "Minced meat", "150 g");
-    addItem("Tortilla", "Tomatoes", "some");
-    addItem("Tortilla", "Cucumber", "some");
-    addItem("Tortilla", "Corn", "50 g");
-    addItem("Tortilla", "Turkish youghurt", "some");
-    addItem("Tortilla", "Garlic", "1 glove");
+    addItem("Tortilla", "Tortilla lettuja", "");
+    addItem("Tortilla", "Jauhelihaa", "400 g");
+    addItem("Tortilla", "Valkosipuli", "1 kynsi");
+    addItem("Tortilla", "Tomaatti", "");
+    addItem("Tortilla", "Kurkku", "");
+    addItem("Tortilla", "Pakastemaissi", "");
+    addItem("Tortilla", "Turkkilainen jogurtti", "");
 
-    addItem("Salmon soup", "Salmon", "150 g");
-    addItem("Salmon soup", "Potatoes", "3 pcs");
-    addItem("Salmon soup", "Carrots", "200 ml");
-    addItem("Salmon soup", "Onion", "150 g");
-    addItem("Salmon soup", "Butter", "3 pcs");
-    addItem("Salmon soup", "Cream", "200 ml");
-    addItem("Salmon soup", "Dill", "to taste");
+    addItem("Lohikeitto", "Lohi", "");
+    addItem("Lohikeitto", "Peruna", "");
+    addItem("Lohikeitto", "Porkkana", "");
+    addItem("Lohikeitto", "Sipuli", "");
+    addItem("Lohikeitto", "Voi", "");
+    addItem("Lohikeitto", "Kuohukerma", "");
+    addItem("Lohikeitto", "Tilli", "");
 
-    addItem("Fried Liver", "Liver", "1 pc");
-    addItem("Fried Liver", "Butter", "1 pc");
+    addItem("Paistettu maksa", "Maksa", "1 pc");
+    addItem("Paistettu maksa", "Voi", "1 pc");
 
-    addItem("Pasta Bolognese", "Pancetta", "150 g");
-    addItem("Pasta Bolognese", "Onion", "3 pcs");
-    addItem("Pasta Bolognese", "Carrots", "200 ml");
-    addItem("Pasta Bolognese", "Cellery", "150 g");
-    addItem("Pasta Bolognese", "Minced meat", "3 pcs");
-    addItem("Pasta Bolognese", "Red Wine", "200 ml");
-    addItem("Pasta Bolognese", "Tomato Paste", "to taste");
-    addItem("Pasta Bolognese", "Buljong", "to taste");
-    addItem("Pasta Bolognese", "Milk", "to taste");
-    addItem("Pasta Bolognese", "Spagetti", "to taste");
+    addItem("Spagetti Bolognese", "Pancetta", "");
+    addItem("Spagetti Bolognese", "Sipuli", "");
+    addItem("Spagetti Bolognese", "Porkkana", "");
+    addItem("Spagetti Bolognese", "Selleri", "");
+    addItem("Spagetti Bolognese", "Jauheliha", "");
+    addItem("Spagetti Bolognese", "Punaviini", "");
+    addItem("Spagetti Bolognese", "Tomaattipyree", "");
+    addItem("Spagetti Bolognese", "Paseerattu tomaatti", "");
+    addItem("Spagetti Bolognese", "Lihaliemi", "");
+    addItem("Spagetti Bolognese", "Maito", "");
+    addItem("Spagetti Bolognese", "Spagetti", "");
 
-    addItem("Cured Salmon", "Salmon", "1 pc");
+    addItem("Graavilohi", "Lohi", "");
 
-    addItem("Hamburger", "Minced Meat", "1 pc");
-    addItem("Hamburger", "Bun", "1 pc");
-    addItem("Hamburger", "Cheddar", "1 slice");
-    addItem("Hamburger", "Mayonese", "few slices");
-    addItem("Hamburger", "Lettuce", "few slices");
+    addItem("Hampurilainen", "Jauheliha", "400 g");
+    addItem("Hampurilainen", "Juustoviipaleet", "4");
+    addItem("Hampurilainen", "Sämpylä", "4");
+    addItem("Hampurilainen", "Majoneesi", "");
+    addItem("Hampurilainen", "Jäävuorisalaatti", "");
 
-    addItem("Fried Mushrooms", "Mushrooms", "300 g");
-    addItem("Fried Mushrooms", "Garlic", "300 g");
-    addItem("Fried Mushrooms", "Pecorino", "300 g");
-    addItem("Fried Mushrooms", "Aurajuusto", "300 g");
+    addItem("Sienipannu", "Sieni", "");
+    addItem("Sienipannu", "Valkosipuli", "");
+    addItem("Sienipannu", "Pecorino", "");
+    addItem("Sienipannu", "Aurajuusto", "");
 
-    addItem("Salmon nigiri", "Salmon", "2 slices");
-    addItem("Salmon nigiri", "Rice", "100 g");
-    addItem("Salmon nigiri", "Teriyaki souce", "optional");
-    addItem("Salmon nigiri", "Mayonese", "optional");
-    addItem("Salmon nigiri", "Wasabi", "optional");
-    addItem("Salmon nigiri", "Sesame Seeds", "optional");
-    addItem("Salmon nigiri", "Green Onion", "optional");
+    addItem("Lohi nigiri", "Lohi", "");
+    addItem("Lohi nigiri", "Riisi", "");
+    addItem("Lohi nigiri", "Teriyaki kastike", "");
+    addItem("Lohi nigiri", "Majoneesi", "");
+    addItem("Lohi nigiri", "Wasabi", "");
+    addItem("Lohi nigiri", "Seesamin siemenet", "");
+    addItem("Lohi nigiri", "Ruohosipuli", "");
 
-    addItem("Macaroni Casserole", "Macaroni", "300 g");
-    addItem("Macaroni Casserole", "Minced Meat", "300 g");
-    addItem("Macaroni Casserole", "Eggs", "300 g");
-    addItem("Macaroni Casserole", "Milk", "300 g");
-    addItem("Macaroni Casserole", "Cheese", "300 g");
+    addItem("Makaronilaatikko", "Makaroni", "");
+    addItem("Makaronilaatikko", "Jauheliha", "");
+    addItem("Makaronilaatikko", "Muna", "");
+    addItem("Makaronilaatikko", "Maito", "");
+    addItem("Makaronilaatikko", "Juusto", "");
 
-    addItem("Ribs", "Pork ribs", "300 g");
-    addItem("Ribs", "BBQ sauce", "50 g");
+    addItem("Ribsit", "Porsaan ribsit", "");
+    addItem("Ribs", "BBQ-kastike", "");
 
-    addItem("Pulled Pork", "Pulled pork", "150 g");
-    addItem("Pulled Pork", "BBQ sauce", "30 g");
-    addItem("Pulled Pork", "Bun", "1 pc");}
+    addItem("Nyhtöpossu", "Ribsit", "");
+    addItem("Nyhtöpossu", "BBQ-kastike", "");
+    addItem("Nyhtöpossu", "Soijakastike", "");
+}
 
 void MainWindow::addItem(const QString &food, const QString &ingredient, const QString &amount)
 {
@@ -226,6 +228,18 @@ void MainWindow::setupModelAndView()
     foodModel->setHeaderData(1, Qt::Horizontal, "Food");
     foodModel->setHeaderData(2, Qt::Horizontal, "Recipe");
 
+    ui->foodView->setStyleSheet(
+        "QTableView::item:selected {"
+        "    background-color: #add8ff;"
+        "    color: black;"
+        "}"
+        "QTableView::item:selected:active {"
+        "    background-color: #add8ff;"
+        "}"
+        "QTableView::item:selected:!active {"
+        "    background-color: #cce9ff;"
+        "}"
+        );
     ui->foodView->setModel(foodModel);
     ui->foodView->hideColumn(0); // food_id
     ui->foodView->hideColumn(2); // hide recipe column
