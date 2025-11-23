@@ -255,7 +255,11 @@ void MainWindow::setupModelAndView()
     ingredientsModel->setHeaderData(1, Qt::Horizontal, "Ingredient");
 
     ui->ingredientView->setModel(ingredientsModel);
-    ui->ingredientView->hideColumn(1);
+    ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);
+    //ui->ingredientView->hideColumn(1);
+    ui->ingredientView->setColumnHidden(1, true);  // DO hide it visually
+    ingredientsModel->setHeaderData(1, Qt::Horizontal, QVariant());  // blank header
+
     ui->ingredientView->setColumnWidth(0, 35);
     ui->ingredientView->setColumnWidth(3, 120);
     ui->ingredientView->setEditTriggers(QAbstractItemView::AllEditTriggers);

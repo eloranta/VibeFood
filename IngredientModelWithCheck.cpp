@@ -1,135 +1,149 @@
 #include "IngredientModelWithCheck.h"
 #include <QSqlQuery>
+#include <QSqlError>
 #include <QDebug>
 
-IngredientModelWithCheck::IngredientModelWithCheck(QObject *parent,
-                                                   const QSqlDatabase &db)
+IngredientModelWithCheck::IngredientModelWithCheck(
+    QObject *parent, const QSqlDatabase &db)
     : QSqlTableModel(parent, db)
 {
 }
 
+// -------------------------------
+// Column count
+// -------------------------------
 int IngredientModelWithCheck::columnCount(const QModelIndex &parent) const
 {
-    // +2: checkbox column + amount column
-    return QSqlTableModel::columnCount(parent) + 2;
+    return QSqlTableModel::columnCount(parent) + 2; // checkbox + amount
 }
 
+// -------------------------------
+// Helper: ingredient_id for a given view row
+// -------------------------------
+int IngredientModelWithCheck::ingredientIdForRow(int row) const
+{
+    return QSqlTableModel::data(
+               QSqlTableModel::index(row, 0),
+               Qt::DisplayRole
+               ).toInt();
+}
+
+// -------------------------------
+// SELECT → reset check/amount maps
+// -------------------------------
 bool IngredientModelWithCheck::select()
 {
     bool ok = QSqlTableModel::select();
 
-    int rows = rowCount();
-    m_checks  = QVector<Qt::CheckState>(rows, Qt::Unchecked);
-    m_amounts = QVector<QString>(rows, "");
+    m_checks.clear();
+    m_amounts.clear();
 
     return ok;
 }
 
-QVariant IngredientModelWithCheck::data(const QModelIndex &index,
-                                        int role) const
+// -------------------------------
+// DATA
+// -------------------------------
+QVariant IngredientModelWithCheck::data(
+    const QModelIndex &index, int role) const
 {
     if (!index.isValid())
         return QVariant();
 
-    int r = index.row();
-    int c = index.column();
+    int row = index.row();
+    int col = index.column();
+    int ingredientId = ingredientIdForRow(row);
 
-    // ----- Column 0: checkbox -----
-    if (c == 0)
+    // Column 0 = checkbox
+    if (col == 0)
     {
         if (role == Qt::CheckStateRole)
-            return m_checks[r];
+            return m_checks.value(ingredientId, Qt::Unchecked);
         return QVariant();
     }
 
-    // ----- Column 3: amount (virtual) -----
-    if (c == 3)
+    // Column 3 = amount
+    if (col == 3)
     {
         if (role == Qt::DisplayRole || role == Qt::EditRole)
-            return m_amounts[r];
+            return m_amounts.value(ingredientId);
         return QVariant();
     }
 
-    // SQL-backed columns shift by -1
-    QModelIndex src = QSqlTableModel::index(r, c - 1);
-    return QSqlTableModel::data(src, role);
+    // SQL-backed columns (shift by 1)
+    return QSqlTableModel::data(
+        QSqlTableModel::index(row, col - 1), role);
 }
 
-bool IngredientModelWithCheck::setData(const QModelIndex &index,
-                                       const QVariant &value,
-                                       int role)
+// -------------------------------
+// SET DATA
+// -------------------------------
+bool IngredientModelWithCheck::setData(
+    const QModelIndex &index, const QVariant &value, int role)
 {
     if (!index.isValid())
         return false;
 
-    int r = index.row();
-    int c = index.column();
+    int row = index.row();
+    int col = index.column();
+    int ingredientId = ingredientIdForRow(row);
 
-    // ----- CHECKBOX COLUMN -----
-    if (c == 0 && role == Qt::CheckStateRole)
+    // ----------------------------------------
+    // CHECKBOX
+    // ----------------------------------------
+    if (col == 0 && role == Qt::CheckStateRole)
     {
         Qt::CheckState state = static_cast<Qt::CheckState>(value.toInt());
-        m_checks[r] = state;
+        m_checks[ingredientId] = state;
 
-        // If unchecked → clear amount
         if (state == Qt::Unchecked)
-            m_amounts[r].clear();
+            m_amounts.remove(ingredientId);
 
         emit dataChanged(index, index, {Qt::CheckStateRole});
 
-        int ingredientId =
-            QSqlTableModel::data(QSqlTableModel::index(r, 0),
-                                 Qt::DisplayRole).toInt();
-
+        // Pivot update
         if (m_currentFoodId >= 0)
         {
             QSqlQuery q(database());
-
             if (state == Qt::Checked)
             {
                 q.prepare("INSERT OR IGNORE INTO food_ingredients "
                           "(food_id, ingredient_id, amount) "
                           "VALUES (:f, :i, '')");
-                q.bindValue(":f", m_currentFoodId);
-                q.bindValue(":i", ingredientId);
-                q.exec();
             }
             else
             {
                 q.prepare("DELETE FROM food_ingredients "
                           "WHERE food_id = :f AND ingredient_id = :i");
-                q.bindValue(":f", m_currentFoodId);
-                q.bindValue(":i", ingredientId);
-                q.exec();
             }
-        }
 
+            q.bindValue(":f", m_currentFoodId);
+            q.bindValue(":i", ingredientId);
+            q.exec();
+        }
         return true;
     }
 
-    // ----- AMOUNT COLUMN -----
-    if (c == 3 && role == Qt::EditRole)
+    // ----------------------------------------
+    // AMOUNT COLUMN
+    // ----------------------------------------
+    if (col == 3 && role == Qt::EditRole)
     {
-        // Only editable if checkbox is checked
-        if (m_checks[r] == Qt::Unchecked)
+        if (m_checks.value(ingredientId) != Qt::Checked)
             return false;
 
-        QString newAmount = value.toString();
-        m_amounts[r] = newAmount;
+        m_amounts[ingredientId] = value.toString();
 
-        emit dataChanged(index, index);
+        emit dataChanged(index, index, {Qt::DisplayRole, Qt::EditRole});
 
-        int ingredientId =
-            QSqlTableModel::data(QSqlTableModel::index(r, 0),
-                                 Qt::DisplayRole).toInt();
-
+        // Pivot update
         if (m_currentFoodId >= 0)
         {
             QSqlQuery q(database());
             q.prepare("UPDATE food_ingredients "
                       "SET amount = :a "
                       "WHERE food_id = :f AND ingredient_id = :i");
-            q.bindValue(":a", newAmount);
+            q.bindValue(":a", value.toString());
             q.bindValue(":f", m_currentFoodId);
             q.bindValue(":i", ingredientId);
             q.exec();
@@ -138,82 +152,102 @@ bool IngredientModelWithCheck::setData(const QModelIndex &index,
         return true;
     }
 
-    // ----- DEFAULT (SQL FIELDS) -----
-    QModelIndex src = QSqlTableModel::index(r, c - 1);
-    return QSqlTableModel::setData(src, value, role);
+    // ----------------------------------------
+    // NAME column (SQL col 1)
+    // ----------------------------------------
+    if (col == 2 && role == Qt::EditRole)
+    {
+        QModelIndex sqlIndex = QSqlTableModel::index(row, 1);
+
+        bool ok = QSqlTableModel::setData(sqlIndex, value, role);
+
+        if (!ok)
+            return false;
+
+        if (!QSqlTableModel::submitAll())
+            qWarning() << "submitAll failed:" << lastError().text();
+
+        emit dataChanged(index, index, {Qt::DisplayRole, Qt::EditRole});
+        return true;
+    }
+
+    // ID column not editable
+    return false;
 }
 
+// -------------------------------
+// FLAGS
+// -------------------------------
 Qt::ItemFlags IngredientModelWithCheck::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
         return Qt::NoItemFlags;
 
-    int c = index.column();
+    int col = index.column();
+    int row = index.row();
+    int ingredientId = ingredientIdForRow(row);
 
-    // Checkbox column
-    if (c == 0)
-        return Qt::ItemIsEnabled |
-               Qt::ItemIsSelectable |
-               Qt::ItemIsUserCheckable;
+    if (col == 0)
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
 
-    // Amount column editable only when checked
-    if (c == 3)
+    if (col == 1)
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable; // id
+
+    if (col == 2)
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable; // name
+
+    if (col == 3)
     {
-        if (m_checks[index.row()] == Qt::Checked)
-            return Qt::ItemIsEnabled |
-                   Qt::ItemIsEditable |
-                   Qt::ItemIsSelectable;
-
+        if (m_checks.value(ingredientId) == Qt::Checked)
+            return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
         return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     }
 
-    // Other SQL columns
-    QModelIndex src = QSqlTableModel::index(index.row(), c - 1);
-    return QSqlTableModel::flags(src);
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
-QVariant IngredientModelWithCheck::headerData(int section,
-                                              Qt::Orientation orientation,
-                                              int role) const
+// -------------------------------
+// HEADERS
+// -------------------------------
+QVariant IngredientModelWithCheck::headerData(
+    int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
     {
-        if (section == 0) return QString("✔");
-        if (section == 3) return QString("Amount");
-        return QSqlTableModel::headerData(section - 1, orientation, role);
+        switch (section)
+        {
+        case 0: return "✔";
+        case 1: return "ID";
+        case 2: return "Ingredient";
+        case 3: return "Amount";
+        }
     }
-
     return QSqlTableModel::headerData(section, orientation, role);
 }
 
+// -------------------------------
+// SET CURRENT FOOD
+// -------------------------------
 void IngredientModelWithCheck::setCurrentFoodId(int id)
 {
     m_currentFoodId = id;
 }
 
+// -------------------------------
+// LOAD CHECKS + AMOUNTS FROM DB
+// -------------------------------
 void IngredientModelWithCheck::setCheckedRows(
     const QSet<int> &ingredientIds,
     const QMap<int, QString> &amounts)
 {
-    for (int r = 0; r < rowCount(); ++r)
-    {
-        int ingredientId =
-            QSqlTableModel::data(QSqlTableModel::index(r, 0),
-                                 Qt::DisplayRole).toInt();
+    m_checks.clear();
+    m_amounts.clear();
 
-        if (ingredientIds.contains(ingredientId))
-        {
-            m_checks[r]  = Qt::Checked;
-            m_amounts[r] = amounts.value(ingredientId);
-        }
-        else
-        {
-            m_checks[r]  = Qt::Unchecked;
-            m_amounts[r] = "";
-        }
-    }
+    for (int id : ingredientIds)
+        m_checks[id] = Qt::Checked;
 
-    emit dataChanged(index(0,0),
-                     index(rowCount()-1, 3),
-                     {Qt::DisplayRole, Qt::EditRole, Qt::CheckStateRole});
+    m_amounts = amounts;
+
+    if (rowCount() > 0)
+        emit dataChanged(index(0,0), index(rowCount()-1,3));
 }
