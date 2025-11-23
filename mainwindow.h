@@ -36,7 +36,8 @@ private:
 private slots:
     void onFoodSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
     void onShowAllToggled(bool checked);
-    void onRecipeChanged();    // <-- NEW
+    void onRecipeChanged();
+    void onAddFoodClicked();
 };
 
 #endif // MAINWINDOW_H

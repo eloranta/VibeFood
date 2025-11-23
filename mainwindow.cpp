@@ -263,6 +263,8 @@ void MainWindow::setupModelAndView()
 
     connect(ui->foodView->selectionModel(), &QItemSelectionModel::currentChanged,
             this, &MainWindow::onFoodSelectionChanged);
+    connect(ui->addFood, &QPushButton::clicked,
+            this, &MainWindow::onAddFoodClicked);
 
     ui->foodView->selectRow(0);
     onFoodSelectionChanged(foodModel->index(0,0), QModelIndex());
@@ -344,3 +346,29 @@ void MainWindow::onRecipeChanged()
     q.bindValue(":id", foodId);
     q.exec();
 }
+
+void MainWindow::onAddFoodClicked()
+{
+    // Insert new empty row at bottom
+    int row = foodModel->rowCount();
+    foodModel->insertRow(row);
+
+    // Set default empty values
+    foodModel->setData(foodModel->index(row, 1), "");   // name
+    foodModel->setData(foodModel->index(row, 2), "");   // recipe
+
+    // Commit the row to the database
+    if (!foodModel->submitAll())
+        qWarning() << "Failed to insert new food:" << foodModel->lastError();
+
+    // Select the new row
+    ui->foodView->selectRow(row);
+
+    // Clear ingredients + recipe view
+    ui->textEdit->clear();
+    ingredientsModel->setCheckedRows({}, {});
+    onShowAllToggled(ui->btnShowAll->isChecked());
+}
+
+
+
