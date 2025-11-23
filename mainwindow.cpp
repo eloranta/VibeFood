@@ -265,7 +265,8 @@ void MainWindow::setupModelAndView()
             this, &MainWindow::onFoodSelectionChanged);
     connect(ui->addFood, &QPushButton::clicked,
             this, &MainWindow::onAddFoodClicked);
-
+    connect(ui->deleteFood, &QPushButton::clicked,
+            this, &MainWindow::onDeleteFoodClicked);
     ui->foodView->selectRow(0);
     onFoodSelectionChanged(foodModel->index(0,0), QModelIndex());
 }
@@ -370,6 +371,54 @@ void MainWindow::onAddFoodClicked()
     ingredientsModel->setCheckedRows({}, {});
     onShowAllToggled(ui->btnShowAll->isChecked());
 }
+
+void MainWindow::onDeleteFoodClicked()
+{
+    QModelIndex current = ui->foodView->currentIndex();
+    if (!current.isValid())
+        return;
+
+    int row = current.row();
+    int foodId = foodModel->data(foodModel->index(row, 0)).toInt();
+
+    // --- Delete pivot rows ---
+    {
+        QSqlQuery q(db);
+        q.prepare("DELETE FROM food_ingredients WHERE food_id = :id");
+        q.bindValue(":id", foodId);
+        q.exec();
+    }
+
+    // --- Delete food row ---
+    foodModel->removeRow(row);
+    if (!foodModel->submitAll())
+    {
+        qWarning() << "Failed to delete food:" << foodModel->lastError();
+        return;
+    }
+
+    foodModel->select();
+
+    // --- Update UI selection ---
+    int newRow = row;
+    if (newRow >= foodModel->rowCount())
+        newRow = foodModel->rowCount() - 1;
+
+    if (newRow >= 0)
+    {
+        ui->foodView->selectRow(newRow);
+        onFoodSelectionChanged(foodModel->index(newRow, 0),
+                               QModelIndex());
+    }
+    else
+    {
+        // No foods left
+        ui->textEdit->clear();
+        ingredientsModel->setCheckedRows({}, {});
+        onShowAllToggled(ui->btnShowAll->isChecked());
+    }
+}
+
 
 
 

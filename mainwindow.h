@@ -38,6 +38,7 @@ private slots:
     void onShowAllToggled(bool checked);
     void onRecipeChanged();
     void onAddFoodClicked();
+    void onDeleteFoodClicked();
 };
 
 #endif // MAINWINDOW_H
