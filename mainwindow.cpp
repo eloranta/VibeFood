@@ -354,7 +354,7 @@ void MainWindow::onAddFoodClicked()
     foodModel->insertRow(row);
 
     // Set default empty values
-    foodModel->setData(foodModel->index(row, 1), "");   // name
+    foodModel->setData(foodModel->index(row, 1), "New item");   // name
     foodModel->setData(foodModel->index(row, 2), "");   // recipe
 
     // Commit the row to the database
@@ -363,6 +363,7 @@ void MainWindow::onAddFoodClicked()
 
     // Select the new row
     ui->foodView->selectRow(row);
+    ui->foodView->edit(foodModel->index(row, 1));
 
     // Clear ingredients + recipe view
     ui->textEdit->clear();
