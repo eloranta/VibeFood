@@ -54,6 +54,9 @@
            </property>
            <item>
             <widget class="QTableView" name="foodView">
+             <property name="frameShape">
+              <enum>QFrame::Shape::Box</enum>
+             </property>
              <attribute name="horizontalHeaderStretchLastSection">
               <bool>true</bool>
              </attribute>
@@ -102,6 +105,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QTableView" name="ingredientView">
+          <property name="frameShape">
+           <enum>QFrame::Shape::Box</enum>
+          </property>
           <attribute name="horizontalHeaderStretchLastSection">
            <bool>true</bool>
           </attribute>
@@ -145,7 +151,14 @@
      </layout>
     </item>
     <item row="1" column="0">
-     <widget class="QTextEdit" name="textEdit"/>
+     <widget class="QTextEdit" name="textEdit">
+      <property name="frameShape">
+       <enum>QFrame::Shape::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Shadow::Plain</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
