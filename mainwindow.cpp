@@ -198,9 +198,9 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->ingredientView->setSortingEnabled(true);
     ui->ingredientView->setColumnWidth(0, 60);
+    ui->ingredientView->hideColumn(1);
     ui->ingredientView->horizontalHeader()->setStretchLastSection(true);
-    ui->ingredientView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    ui->ingredientView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->ingredientView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     ui->ingredientView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
 
     connect(foodModel, &QSqlTableModel::dataChanged, ingredientModel, &QSqlTableModel::select);
@@ -248,6 +248,8 @@ void MainWindow::setupModelAndView()
         foodModel->setData(recipeIdx, ui->textEdit->toPlainText());
         updatingRecipeText = false;
     });
+
+    connect(ui->addFood, &QPushButton::clicked, this, &MainWindow::addFood);
 }
 
 void MainWindow::setIngredientFilterForFood(int foodId)
@@ -264,6 +266,57 @@ void MainWindow::setIngredientFilterForFood(int foodId)
         ingredientModel->setFilter(QStringLiteral("food_id=%1").arg(foodId));
     }
     ingredientModel->select();
+}
+
+void MainWindow::addFood()
+{
+    const QString name = "New Food";
+
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO foods (name, recipe) VALUES (:n, :r);");
+    query.bindValue(":n", name);
+    query.bindValue(":r", QString());
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Add food failed", query.lastError().text());
+        return;
+    }
+
+    const int newId = query.lastInsertId().isValid() ? query.lastInsertId().toInt() : -1;
+
+    foodModel->select();
+
+    int targetRow = -1;
+    if (newId > 0)
+    {
+        for (int row = 0; row < foodModel->rowCount(); ++row)
+        {
+            if (foodModel->index(row, 0).data().toInt() == newId)
+            {
+                targetRow = row;
+                break;
+            }
+        }
+    }
+
+    if (targetRow < 0)
+    {
+        for (int row = 0; row < foodModel->rowCount(); ++row)
+        {
+            if (foodModel->index(row, 1).data().toString() == name)
+            {
+                targetRow = row;
+                break;
+            }
+        }
+    }
+
+    if (targetRow >= 0)
+    {
+        const QModelIndex idx = foodModel->index(targetRow, 0);
+        ui->foodView->selectRow(targetRow);
+        ui->foodView->scrollTo(idx);
+    }
 }
 bool MainWindow::createTables()
 {

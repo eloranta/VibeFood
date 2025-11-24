@@ -20,6 +20,7 @@ public:
     bool openDatabase();
     bool createTables();
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
+    void addFood();
     void seedDataIfEmpty();
     void setupModelAndView();
     void setIngredientFilterForFood(int foodId);
