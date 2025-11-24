@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QAbstractItemView>
+#include <QHeaderView>
 #include <QItemSelectionModel>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -15,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->horizontalLayout_2->setStretch(0, 1);
+    ui->horizontalLayout_2->setStretch(1, 1);
     if (!openDatabase())
     {
         QMessageBox::critical(this, "Database error", "Failed to open SQLite database.");
@@ -178,6 +181,9 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->foodView->setSortingEnabled(true);
+    ui->foodView->setColumnWidth(0, 60);
+    ui->foodView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->foodView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     ui->foodView->selectRow(0);
 
     ingredientModel = new QSqlTableModel(this, db);
@@ -190,6 +196,11 @@ void MainWindow::setupModelAndView()
     ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->ingredientView->setSortingEnabled(true);
+    ui->ingredientView->setColumnWidth(0, 60);
+    ui->ingredientView->horizontalHeader()->setStretchLastSection(true);
+    ui->ingredientView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->ingredientView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->ingredientView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
 
     connect(foodModel, &QSqlTableModel::dataChanged, ingredientModel, &QSqlTableModel::select);
     connect(foodModel, &QSqlTableModel::rowsInserted, ingredientModel, &QSqlTableModel::select);
