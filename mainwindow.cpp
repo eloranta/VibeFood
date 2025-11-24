@@ -11,6 +11,7 @@
 #include <QHeaderView>
 #include <QItemSelectionModel>
 #include <QTextEdit>
+#include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -250,6 +251,7 @@ void MainWindow::setupModelAndView()
     });
 
     connect(ui->addFood, &QPushButton::clicked, this, &MainWindow::addFood);
+    connect(ui->deleteFood, &QPushButton::clicked, this, &MainWindow::deleteFood);
 }
 
 void MainWindow::setIngredientFilterForFood(int foodId)
@@ -265,7 +267,8 @@ void MainWindow::setIngredientFilterForFood(int foodId)
     {
         ingredientModel->setFilter(QStringLiteral("food_id=%1").arg(foodId));
     }
-    ingredientModel->select();
+    if (ingredientModel)
+        ingredientModel->select();
 }
 
 void MainWindow::addFood()
@@ -317,6 +320,55 @@ void MainWindow::addFood()
         ui->foodView->selectRow(targetRow);
         ui->foodView->scrollTo(idx);
     }
+}
+
+void MainWindow::deleteFood()
+{
+    const auto *selection = ui->foodView->selectionModel();
+    if (!selection)
+        return;
+
+    const QModelIndex currentIdx = selection->currentIndex();
+    if (!currentIdx.isValid())
+        return;
+
+    const int foodId = foodModel->index(currentIdx.row(), 0).data().toInt();
+    if (foodId <= 0)
+        return;
+
+    QSqlQuery query(db);
+    query.prepare("DELETE FROM food_ingredients WHERE food_id = :id;");
+    query.bindValue(":id", foodId);
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Delete food failed", query.lastError().text());
+        return;
+    }
+
+    query.prepare("DELETE FROM foods WHERE food_id = :id;");
+    query.bindValue(":id", foodId);
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Delete food failed", query.lastError().text());
+        return;
+    }
+
+    foodModel->select();
+    ingredientModel->select();
+
+    const int rowCount = foodModel->rowCount();
+    if (rowCount == 0)
+    {
+        setIngredientFilterForFood(-1);
+        updatingRecipeText = true;
+        ui->textEdit->clear();
+        updatingRecipeText = false;
+        return;
+    }
+
+    const int targetRow = std::clamp(currentIdx.row(), 0, rowCount - 1);
+    ui->foodView->selectRow(targetRow);
+    ui->foodView->scrollTo(foodModel->index(targetRow, 0));
 }
 bool MainWindow::createTables()
 {
