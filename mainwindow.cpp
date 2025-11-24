@@ -62,6 +62,18 @@ void MainWindow::addItem(const QString &food, const QString &ingredient, const Q
     query.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:n)");
     query.bindValue(":n", ingredient);
     query.exec();
+
+    query.prepare(
+        "INSERT OR IGNORE INTO food_ingredients (food_id, ingredient_id, amount) "
+        "VALUES ("
+        "  (SELECT food_id FROM foods WHERE name = :food),"
+        "  (SELECT ingredient_id FROM ingredients WHERE name = :ingredient),"
+        "  :amount"
+        ");");
+    query.bindValue(":food", food);
+    query.bindValue(":ingredient", ingredient);
+    query.bindValue(":amount", amount);
+    query.exec();
 }
 
 void MainWindow::seedDataIfEmpty()
@@ -189,6 +201,30 @@ bool MainWindow::createTables()
             ");"))
     {
         qWarning() << "Create ingredients error:" << query.lastError().text();
+        return false;
+    }
+
+    if (!query.exec(
+            "CREATE TABLE IF NOT EXISTS food_ingredients ("
+            "  food_id INTEGER NOT NULL,"
+            "  ingredient_id INTEGER NOT NULL,"
+            "  amount TEXT,"
+            "  PRIMARY KEY (food_id, ingredient_id)"
+            ");"))
+    {
+        qWarning() << "Create food_ingredients error:" << query.lastError().text();
+        return false;
+    }
+
+    if (!query.exec(
+            "CREATE VIEW IF NOT EXISTS food_view AS "
+            "SELECT f.food_id, f.name AS food_name, fi.amount, i.name AS ingredient_name "
+            "FROM food_ingredients fi "
+            "JOIN foods f ON fi.food_id = f.food_id "
+            "JOIN ingredients i ON fi.ingredient_id = i.ingredient_id "
+            "ORDER BY f.name, i.name;"))
+    {
+        qWarning() << "Create food_view error:" << query.lastError().text();
         return false;
     }
 
