@@ -160,6 +160,7 @@ void MainWindow::setupModelAndView()
     foodModel = new QSqlTableModel(this, db);
     foodModel->setTable("foods");
     foodModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    foodModel->setSort(1, Qt::AscendingOrder);
     foodModel->select();
 
     foodModel->setHeaderData(1, Qt::Horizontal, "Food");
@@ -183,6 +184,7 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->foodView->setSortingEnabled(true);
+    ui->foodView->sortByColumn(1, Qt::AscendingOrder);
     ui->foodView->setColumnWidth(0, 60);
     ui->foodView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     ui->foodView->hideColumn(2);
