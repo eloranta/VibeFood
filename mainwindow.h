@@ -22,11 +22,13 @@ public:
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
     void seedDataIfEmpty();
     void setupModelAndView();
+    void setIngredientFilterForFood(int foodId);
 
 private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
     QSqlTableModel *foodModel;
+    QSqlTableModel *ingredientModel;
 };
 
 #endif // MAINWINDOW_H

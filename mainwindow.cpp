@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QAbstractItemView>
+#include <QItemSelectionModel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -178,6 +179,51 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->foodView->setSortingEnabled(true);
     ui->foodView->selectRow(0);
+
+    ingredientModel = new QSqlTableModel(this, db);
+    ingredientModel->setTable("food_view");
+    ingredientModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    ingredientModel->setHeaderData(2, Qt::Horizontal, "Ingredient");
+    ingredientModel->setHeaderData(3, Qt::Horizontal, "Amount");
+
+    ui->ingredientView->setModel(ingredientModel);
+    ui->ingredientView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->ingredientView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->ingredientView->setSortingEnabled(true);
+
+    connect(foodModel, &QSqlTableModel::dataChanged, ingredientModel, &QSqlTableModel::select);
+    connect(foodModel, &QSqlTableModel::rowsInserted, ingredientModel, &QSqlTableModel::select);
+    connect(foodModel, &QSqlTableModel::rowsRemoved, ingredientModel, &QSqlTableModel::select);
+
+    if (auto selModel = ui->foodView->selectionModel())
+    {
+        connect(selModel, &QItemSelectionModel::currentRowChanged, this,
+                [this](const QModelIndex &current, const QModelIndex &) {
+                    const int foodId = current.sibling(current.row(), 0).data().toInt();
+                    setIngredientFilterForFood(foodId);
+                });
+    }
+
+    const QModelIndex current = ui->foodView->selectionModel()
+            ? ui->foodView->selectionModel()->currentIndex()
+            : QModelIndex();
+    setIngredientFilterForFood(current.isValid() ? current.sibling(current.row(), 0).data().toInt() : -1);
+}
+
+void MainWindow::setIngredientFilterForFood(int foodId)
+{
+    if (!ingredientModel)
+        return;
+
+    if (foodId <= 0)
+    {
+        ingredientModel->setFilter(QString());
+    }
+    else
+    {
+        ingredientModel->setFilter(QStringLiteral("food_id=%1").arg(foodId));
+    }
+    ingredientModel->select();
 }
 bool MainWindow::createTables()
 {
@@ -216,15 +262,57 @@ bool MainWindow::createTables()
         return false;
     }
 
+    query.exec("DROP VIEW IF EXISTS food_view;");
+
     if (!query.exec(
             "CREATE VIEW IF NOT EXISTS food_view AS "
-            "SELECT f.food_id, f.name AS food_name, fi.amount, i.name AS ingredient_name "
+            "SELECT "
+            "  f.food_id, "
+            "  f.name AS food_name, "
+            "  i.name AS ingredient_name, "
+            "  fi.amount "
             "FROM food_ingredients fi "
             "JOIN foods f ON fi.food_id = f.food_id "
             "JOIN ingredients i ON fi.ingredient_id = i.ingredient_id "
             "ORDER BY f.name, i.name;"))
     {
         qWarning() << "Create food_view error:" << query.lastError().text();
+        return false;
+    }
+
+    query.exec("DROP TRIGGER IF EXISTS update_food_view;");
+
+    if (!query.exec(
+            "CREATE TRIGGER IF NOT EXISTS update_food_view "
+            "INSTEAD OF UPDATE ON food_view "
+            "BEGIN "
+            "  UPDATE foods "
+            "    SET name = NEW.food_name "
+            "    WHERE food_id = NEW.food_id; "
+            "  UPDATE ingredients "
+            "    SET name = NEW.ingredient_name "
+            "    WHERE ingredient_id = ("
+            "      SELECT fi.ingredient_id "
+            "      FROM food_ingredients fi "
+            "      JOIN ingredients i ON fi.ingredient_id = i.ingredient_id "
+            "      WHERE fi.food_id = OLD.food_id "
+            "        AND i.name = OLD.ingredient_name "
+            "      LIMIT 1"
+            "    ); "
+            "  UPDATE food_ingredients "
+            "    SET amount = NEW.amount "
+            "    WHERE food_id = NEW.food_id "
+            "      AND ingredient_id = ("
+            "        SELECT fi.ingredient_id "
+            "        FROM food_ingredients fi "
+            "        JOIN ingredients i ON fi.ingredient_id = i.ingredient_id "
+            "        WHERE fi.food_id = OLD.food_id "
+            "          AND i.name = OLD.ingredient_name "
+            "        LIMIT 1"
+            "      ); "
+            "END;"))
+    {
+        qWarning() << "Create update_food_view trigger error:" << query.lastError().text();
         return false;
     }
 
