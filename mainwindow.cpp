@@ -182,7 +182,7 @@ void MainWindow::setupModelAndView()
 
     ingredientModel = new QSqlTableModel(this, db);
     ingredientModel->setTable("food_view");
-    ingredientModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    ingredientModel->setEditStrategy(QSqlTableModel::OnFieldChange);
     ingredientModel->setHeaderData(2, Qt::Horizontal, "Ingredient");
     ingredientModel->setHeaderData(3, Qt::Horizontal, "Amount");
 
