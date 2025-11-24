@@ -29,6 +29,7 @@ private:
     QSqlDatabase db;
     QSqlTableModel *foodModel;
     QSqlTableModel *ingredientModel;
+    bool updatingRecipeText = false;
 };
 
 #endif // MAINWINDOW_H

@@ -10,6 +10,7 @@
 #include <QAbstractItemView>
 #include <QHeaderView>
 #include <QItemSelectionModel>
+#include <QTextEdit>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -183,7 +184,7 @@ void MainWindow::setupModelAndView()
     ui->foodView->setSortingEnabled(true);
     ui->foodView->setColumnWidth(0, 60);
     ui->foodView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    ui->foodView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    ui->foodView->hideColumn(2);
     ui->foodView->selectRow(0);
 
     ingredientModel = new QSqlTableModel(this, db);
@@ -212,6 +213,11 @@ void MainWindow::setupModelAndView()
                 [this](const QModelIndex &current, const QModelIndex &) {
                     const int foodId = current.sibling(current.row(), 0).data().toInt();
                     setIngredientFilterForFood(foodId);
+                    updatingRecipeText = true;
+                    ui->textEdit->setPlainText(current.isValid()
+                                                   ? current.sibling(current.row(), 2).data().toString()
+                                                   : QString());
+                    updatingRecipeText = false;
                 });
     }
 
@@ -219,6 +225,29 @@ void MainWindow::setupModelAndView()
             ? ui->foodView->selectionModel()->currentIndex()
             : QModelIndex();
     setIngredientFilterForFood(current.isValid() ? current.sibling(current.row(), 0).data().toInt() : -1);
+    updatingRecipeText = true;
+    ui->textEdit->setPlainText(current.isValid()
+                                   ? current.sibling(current.row(), 2).data().toString()
+                                   : QString());
+    updatingRecipeText = false;
+
+    connect(ui->textEdit, &QTextEdit::textChanged, this, [this]() {
+        if (updatingRecipeText)
+            return;
+
+        const auto *selection = ui->foodView->selectionModel();
+        if (!selection)
+            return;
+
+        const QModelIndex currentIdx = selection->currentIndex();
+        if (!currentIdx.isValid())
+            return;
+
+        const QModelIndex recipeIdx = foodModel->index(currentIdx.row(), 2);
+        updatingRecipeText = true;
+        foodModel->setData(recipeIdx, ui->textEdit->toPlainText());
+        updatingRecipeText = false;
+    });
 }
 
 void MainWindow::setIngredientFilterForFood(int foodId)
