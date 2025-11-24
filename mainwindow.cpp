@@ -7,6 +7,7 @@
 #include <QSqlQuery>
 #include <QMessageBox>
 #include <QDebug>
+#include <QAbstractItemView>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,6 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     seedDataIfEmpty();
+    setupModelAndView();
 }
 
 MainWindow::~MainWindow()
@@ -133,6 +135,37 @@ void MainWindow::seedDataIfEmpty()
     addItem("Nyhtöpossu", "Ribsit", "");
     addItem("Nyhtöpossu", "BBQ-kastike", "");
     addItem("Nyhtöpossu", "Soijakastike", "");
+}
+
+void MainWindow::setupModelAndView()
+{
+    foodModel = new QSqlTableModel(this, db);
+    foodModel->setTable("foods");
+    foodModel->setEditStrategy(QSqlTableModel::OnFieldChange);
+    foodModel->select();
+
+    foodModel->setHeaderData(1, Qt::Horizontal, "Food");
+    foodModel->setHeaderData(2, Qt::Horizontal, "Recipe");
+
+    ui->foodView->setStyleSheet(
+        "QTableView::item:selected {"
+        "    background-color: #add8ff;"
+        "    color: black;"
+        "}"
+        "QTableView::item:selected:active {"
+        "    background-color: #add8ff;"
+        "}"
+        "QTableView::item:selected:!active {"
+        "    background-color: #cce9ff;"
+        "}"
+        );
+    ui->foodView->setModel(foodModel);
+    // ui->foodView->hideColumn(0); // food_id
+    // ui->foodView->hideColumn(2); // hide recipe column
+    ui->foodView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->foodView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->foodView->setSortingEnabled(true);
+    ui->foodView->selectRow(0);
 }
 bool MainWindow::createTables()
 {

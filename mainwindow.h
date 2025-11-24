@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QSqlDatabase>
+#include <QSqlTableModel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -20,10 +21,12 @@ public:
     bool createTables();
     void addItem(const QString &food, const QString &ingredient, const QString &amount);
     void seedDataIfEmpty();
+    void setupModelAndView();
 
 private:
     Ui::MainWindow *ui;
     QSqlDatabase db;
+    QSqlTableModel *foodModel;
 };
 
 #endif // MAINWINDOW_H
