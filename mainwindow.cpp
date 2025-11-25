@@ -254,6 +254,7 @@ void MainWindow::setupModelAndView()
 
     connect(ui->addFood, &QPushButton::clicked, this, &MainWindow::addFood);
     connect(ui->deleteFood, &QPushButton::clicked, this, &MainWindow::deleteFood);
+    connect(ui->addIngredient, &QPushButton::clicked, this, &MainWindow::addIngredient);
 }
 
 void MainWindow::setIngredientFilterForFood(int foodId)
@@ -371,6 +372,64 @@ void MainWindow::deleteFood()
     const int targetRow = std::clamp(currentIdx.row(), 0, rowCount - 1);
     ui->foodView->selectRow(targetRow);
     ui->foodView->scrollTo(foodModel->index(targetRow, 0));
+}
+
+void MainWindow::addIngredient()
+{
+    const auto *foodSelection = ui->foodView->selectionModel();
+    if (!foodSelection)
+        return;
+
+    const QModelIndex currentIdx = foodSelection->currentIndex();
+    if (!currentIdx.isValid())
+        return;
+
+    const int foodId = foodModel->index(currentIdx.row(), 0).data().toInt();
+    if (foodId <= 0)
+        return;
+
+    const QString ingredientName = "New Ingredient";
+
+    QSqlQuery query(db);
+    query.prepare("INSERT OR IGNORE INTO ingredients (name) VALUES (:n);");
+    query.bindValue(":n", ingredientName);
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Add ingredient failed", query.lastError().text());
+        return;
+    }
+
+    query.prepare(
+        "INSERT OR REPLACE INTO food_ingredients (food_id, ingredient_id, amount) "
+        "VALUES (:f, (SELECT ingredient_id FROM ingredients WHERE name = :n), '');");
+    query.bindValue(":f", foodId);
+    query.bindValue(":n", ingredientName);
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Add ingredient failed", query.lastError().text());
+        return;
+    }
+
+    ingredientModel->select();
+
+    int targetRow = -1;
+    for (int row = 0; row < ingredientModel->rowCount(); ++row)
+    {
+        const int rowFoodId = ingredientModel->index(row, 0).data().toInt();
+        const QString rowName = ingredientModel->index(row, 2).data().toString();
+        if (rowFoodId == foodId && rowName == ingredientName)
+        {
+            targetRow = row;
+            break;
+        }
+    }
+
+    if (targetRow >= 0)
+    {
+        const QModelIndex idx = ingredientModel->index(targetRow, 0);
+        ui->ingredientView->selectRow(targetRow);
+        ui->ingredientView->scrollTo(idx);
+    }
 }
 bool MainWindow::createTables()
 {

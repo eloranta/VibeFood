@@ -25,6 +25,7 @@ public:
     void setIngredientFilterForFood(int foodId);
     void addFood();
     void deleteFood();
+    void addIngredient();
 
 private:
     Ui::MainWindow *ui;
