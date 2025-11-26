@@ -26,6 +26,7 @@ public:
     void addFood();
     void deleteFood();
     void addIngredient();
+    void deleteIngredient();
 
 private:
     Ui::MainWindow *ui;

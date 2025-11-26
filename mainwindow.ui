@@ -90,15 +90,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="btnShowAll">
+           <widget class="QPushButton" name="deleteIngredient">
             <property name="text">
-             <string>Show All</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
+             <string>Delete</string>
             </property>
            </widget>
           </item>

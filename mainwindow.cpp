@@ -255,6 +255,7 @@ void MainWindow::setupModelAndView()
     connect(ui->addFood, &QPushButton::clicked, this, &MainWindow::addFood);
     connect(ui->deleteFood, &QPushButton::clicked, this, &MainWindow::deleteFood);
     connect(ui->addIngredient, &QPushButton::clicked, this, &MainWindow::addIngredient);
+    connect(ui->deleteIngredient, &QPushButton::clicked, this, &MainWindow::deleteIngredient);
 }
 
 void MainWindow::setIngredientFilterForFood(int foodId)
@@ -430,6 +431,45 @@ void MainWindow::addIngredient()
         ui->ingredientView->selectRow(targetRow);
         ui->ingredientView->scrollTo(idx);
     }
+}
+
+void MainWindow::deleteIngredient()
+{
+    const auto *selection = ui->ingredientView->selectionModel();
+    if (!selection)
+        return;
+
+    const QModelIndex currentIdx = selection->currentIndex();
+    if (!currentIdx.isValid())
+        return;
+
+    const int foodId = ingredientModel->index(currentIdx.row(), 0).data().toInt();
+    const QString ingredientName = ingredientModel->index(currentIdx.row(), 2).data().toString();
+    if (foodId <= 0 || ingredientName.isEmpty())
+        return;
+
+    QSqlQuery query(db);
+    query.prepare(
+        "DELETE FROM food_ingredients "
+        "WHERE food_id = :f "
+        "  AND ingredient_id = (SELECT ingredient_id FROM ingredients WHERE name = :n LIMIT 1);");
+    query.bindValue(":f", foodId);
+    query.bindValue(":n", ingredientName);
+    if (!query.exec())
+    {
+        QMessageBox::warning(this, "Delete ingredient failed", query.lastError().text());
+        return;
+    }
+
+    ingredientModel->select();
+
+    const int rowCount = ingredientModel->rowCount();
+    if (rowCount == 0)
+        return;
+
+    const int targetRow = std::clamp(currentIdx.row(), 0, rowCount - 1);
+    ui->ingredientView->selectRow(targetRow);
+    ui->ingredientView->scrollTo(ingredientModel->index(targetRow, 0));
 }
 bool MainWindow::createTables()
 {
